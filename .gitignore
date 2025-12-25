@@ -1,0 +1,3 @@
+/var/docker/simbp/pgdata/
+/var/log/*.log
+/venv/
