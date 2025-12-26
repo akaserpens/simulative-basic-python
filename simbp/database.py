@@ -3,12 +3,15 @@ from psycopg2.extras import LoggingConnection
 import logging
 from contextlib import contextmanager
 
+import simbp.model
+
+
 def prepare_boolean(value):
     if value is None:
         return None
-    if value is False:
-        return 'f'
-    return 't'
+    if value:
+        return 't'
+    return 'f'
 
 class DBConnection:
     __instance = None
@@ -89,3 +92,59 @@ class AttemptDao:
             cursor.execute('TRUNCATE attempts')
             DBConnection.get_instance().connection().commit()
 
+class TotalsDao:
+    @staticmethod
+    def count_operations(start, end):
+        with DBConnection.get_instance().connection().cursor() as cursor:
+            cursor.execute('SELECT COUNT(*) '
+                           'FROM attempts '
+                           'WHERE created_at >= %s '
+                           'AND created_at <= %s',
+                           (start, end))
+            return cursor.fetchone()[0]
+
+    @staticmethod
+    def count_total_success(start, end):
+        with DBConnection.get_instance().connection().cursor() as cursor:
+            cursor.execute('SELECT COUNT(*) '
+                           'FROM attempts '
+                           'WHERE attempt_type = %s '
+                           'AND is_correct = true '
+                           'AND created_at >= %s '
+                           'AND created_at <= %s',
+                           (simbp.model.ATTEMPT_TYPE_SUBMIT, start, end))
+            return cursor.fetchone()[0]
+
+    @staticmethod
+    def count_total_failures(start, end):
+        with DBConnection.get_instance().connection().cursor() as cursor:
+            cursor.execute('SELECT COUNT(*) '
+                           'FROM attempts '
+                           'WHERE attempt_type = %s '
+                           'AND is_correct = false '
+                           'AND created_at >= %s '
+                           'AND created_at <= %s',
+                           (simbp.model.ATTEMPT_TYPE_SUBMIT, start, end))
+            return cursor.fetchone()[0]
+
+    @staticmethod
+    def count_unique_users(start, end):
+        with DBConnection.get_instance().connection().cursor() as cursor:
+            cursor.execute('SELECT COUNT(DISTINCT user_id) '
+                           'FROM attempts '
+                           'WHERE created_at >= %s '
+                           'AND created_at <= %s',
+                           (start, end))
+            return cursor.fetchone()[0]
+
+    @staticmethod
+    def count_submits_by_users(start, end):
+        with DBConnection.get_instance().connection().cursor() as cursor:
+            cursor.execute('SELECT user_id, COUNT(*) '
+                           'FROM attempts '
+                           'WHERE attempt_type = %s '
+                           'AND created_at >= %s '
+                           'AND created_at <= %s '
+                           'GROUP BY user_id',
+                           (simbp.model.ATTEMPT_TYPE_SUBMIT, start, end))
+            return cursor.fetchall()

@@ -13,10 +13,7 @@ class ITResumeClient:
         self.timeout = None if timeout is None else int(timeout)
 
     def fetch_attempts(self, start, end):
-        if start is None:
-            start = datetime.datetime.now() - datetime.timedelta(hours=24)
-        if end is None:
-            end = min(start + datetime.timedelta(hours=24), datetime.datetime.now())
+
         logging.info(f"Fetching attempts from {start} to {end}...")
         params = {
             "client": self.client,

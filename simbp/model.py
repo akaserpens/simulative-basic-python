@@ -12,8 +12,11 @@ class Attempt:
         self.lis_result_sourcedid = lis_result_sourcedid
         self.lis_outcome_service_url = lis_outcome_service_url
 
-    def is_run(self):
-        return self.attempt_type == ATTEMPT_TYPE_RUN
-
     def is_submit(self):
         return self.attempt_type == ATTEMPT_TYPE_SUBMIT
+
+    def is_success(self):
+        return self.is_submit() and self.is_correct
+
+    def is_failure(self):
+        return self.is_submit() and not self.is_correct
